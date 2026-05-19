@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREEN-API Test Task</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-panel label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #a6a6a6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #a6a6a6;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        button:active {
+            background-color: #d0d0d0;
+        }
+        .group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .response-box {
+            flex: 1;
+            width: 100%;
+            min-height: 400px;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #a6a6a6;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-panel">
+        <input type="text" id="idInstance" placeholder="idInstance">
+        <input type="text" id="apiTokenInstance" placeholder="apiTokenInstance">
+        
+        <button onclick="getSettings()">getSettings</button>
+        <button onclick="getStateInstance()">getStateInstance</button>
+        
+        <div class="group">
+            <input type="text" id="sendMsgPhone" placeholder="77771234567">
+            <textarea id="sendMessageText" rows="3" placeholder="Hello World!"></textarea>
+            <button onclick="sendMessage()">sendMessage</button>
+        </div>
+        
+        <div class="group">
+            <input type="text" id="sendFilePhone" placeholder="77771234567">
+            <input type="text" id="sendFileUrl" placeholder="https://my.site.com/img/horse.png">
+            <button onclick="sendFileByUrl()">sendFileByUrl</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <label>Ответ:</label>
+        <textarea id="responseOutput" class="response-box" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const baseUrl = 'https://api.green-api.com';
+
+    // Функция для получения учетных данных
+    function getCredentials() {
+        const idInstance = document.getElementById('idInstance').value.trim();
+        const apiTokenInstance = document.getElementById('apiTokenInstance').value.trim();
+        
+        if (!idInstance || !apiTokenInstance) {
+            alert('Пожалуйста, заполните idInstance и apiTokenInstance!');
+            return null;
+        }
+        return { idInstance, apiTokenInstance };
+    }
+
+    // Вывод ответа в поле Ответ
+    function showResponse(data) {
+        document.getElementById('responseOutput').value = JSON.stringify(data, null, 4);
+    }
+
+    // 1. Метод getSettings
+    async function getSettings() {
+        const creds = getCredentials();
+        if (!creds) return;
+
+        try {
+            const response = await fetch(`${baseUrl}/waInstance${creds.idInstance}/getSettings/${creds.apiTokenInstance}`);
+            const data = await response.json();
+            showResponse(data);
+        } catch (error) {
+            showResponse({ error: error.message });
+        }
+    }
+
+    // 2. Метод getStateInstance
+    async function getStateInstance() {
+        const creds = getCredentials();
+        if (!creds) return;
+
+        try {
+            const response = await fetch(`${baseUrl}/waInstance${creds.idInstance}/getStateInstance/${creds.apiTokenInstance}`);
+            const data = await response.json();
+            showResponse(data);
+        } catch (error) {
+            showResponse({ error: error.message });
+        }
+    }
+
+    // 3. Метод sendMessage
+    async function sendMessage() {
+        const creds = getCredentials();
+        if (!creds) return;
+
+        const phone = document.getElementById('sendMsgPhone').value.trim();
+        const message = document.getElementById('sendMessageText').value;
+
+        if (!phone || !message) {
+            alert('Заполните номер телефона и текст сообщения!');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${baseUrl}/waInstance${creds.idInstance}/sendMessage/${creds.apiTokenInstance}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: `${phone}@c.us`,
+                    message: message
+                })
+            });
+            const data = await response.json();
+            showResponse(data);
+        } catch (error) {
+            showResponse({ error: error.message });
+        }
+    }
+
+    // 4. Метод sendFileByUrl
+    async function sendFileByUrl() {
+        const creds = getCredentials();
+        if (!creds) return;
+
+        const phone = document.getElementById('sendFilePhone').value.trim();
+        const url = document.getElementById('sendFileUrl').value.trim();
+
+        if (!phone || !url) {
+            alert('Заполните номер телефона и ссылку на файл!');
+            return;
+        }
+
+        // Извлекаем имя файла из URL
+        const fileName = url.substring(url.lastIndexOf('/') + 1) || 'file';
+
+        try {
+            const response = await fetch(`${baseUrl}/waInstance${creds.idInstance}/sendFileByUrl/${creds.apiTokenInstance}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: `${phone}@c.us`,
+                    urlFile: url,
+                    fileName: fileName
+                })
+            });
+            const data = await response.json();
+            showResponse(data);
+        } catch (error) {
+            showResponse({ error: error.message });
+        }
+    }
+</script>
+
+</body>
+</html>
